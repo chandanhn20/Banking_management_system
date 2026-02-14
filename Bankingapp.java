@@ -1,8 +1,9 @@
 import java.util.*;
 
-// Custom Exceptions
-class InvalidEmailException extends Exception {
-    public InvalidEmailException(String message) {
+/* ================= CUSTOM EXCEPTIONS ================= */
+
+class InvalideEmailException extends Exception {
+    public InvalideEmailException(String message) {
         super(message);
     }
 }
@@ -13,33 +14,53 @@ class InvalidAmountException extends Exception {
     }
 }
 
-class InvalidAccountException extends Exception {
-    public InvalidAccountException(String message) {
+class InvalideAccountNumberException extends Exception {
+    public InvalideAccountNumberException(String message) {
         super(message);
     }
 }
 
-// Loan Interface
+class InvalidNameException extends Exception {
+    public InvalidNameException(String message) {
+        super(message);
+    }
+}
+
+class InvalidBalanceException extends Exception {
+    public InvalidBalanceException(String message) {
+        super(message);
+    }
+}
+
+/* ================= INTERFACE ================= */
+
 interface LoanService {
     void applyForLoan(double amount);
 }
 
-// Abstract Class
-abstract class BankAccount implements LoanService {
+/* ================= ABSTRACT CLASS ================= */
+
+abstract class BankAccount {
     private int accountNumber;
     private String accountHolderName;
     protected double balance;
     private String email;
 
-    public BankAccount(int accountNumber, String accountHolderName,
-                       double balance, String email)
-            throws InvalidEmailException, InvalidAmountException {
+    public BankAccount(int accountNumber, String accountHolderName, double balance, String email)
+            throws InvalideAccountNumberException, InvalidNameException,
+            InvalidBalanceException, InvalideEmailException {
 
-        if (!email.matches("^[a-z0-9+_.-]+@[a-z0-9.-]+$"))
-            throw new InvalidEmailException("Invalid Email Format!");
+        if (accountNumber <= 0)
+            throw new InvalideAccountNumberException("Account number must be positive");
+
+        if (accountHolderName == null || !accountHolderName.matches("[A-Za-z ]+"))
+            throw new InvalidNameException("Name must contain only alphabets");
 
         if (balance < 0)
-            throw new InvalidAmountException("Initial balance cannot be negative!");
+            throw new InvalidBalanceException("Balance cannot be negative");
+
+        if (!email.matches("^[a-z0-9+_.-]+@[a-z0-9.-]+$"))
+            throw new InvalideEmailException("Invalid email format");
 
         this.accountNumber = accountNumber;
         this.accountHolderName = accountHolderName;
@@ -53,7 +74,7 @@ abstract class BankAccount implements LoanService {
 
     public void deposit(double amount) throws InvalidAmountException {
         if (amount <= 0)
-            throw new InvalidAmountException("Deposit amount must be positive!");
+            throw new InvalidAmountException("Deposit amount must be greater than zero");
 
         balance += amount;
         System.out.println("Amount deposited: " + amount);
@@ -61,63 +82,60 @@ abstract class BankAccount implements LoanService {
 
     public void withdraw(double amount) throws InvalidAmountException {
         if (amount <= 0)
-            throw new InvalidAmountException("Withdraw amount must be positive!");
+            throw new InvalidAmountException("Withdraw amount must be greater than zero");
 
         if (amount > balance)
-            throw new InvalidAmountException("Insufficient balance!");
+            throw new InvalidAmountException("Insufficient balance");
 
         balance -= amount;
         System.out.println("Amount withdrawn: " + amount);
     }
 
     public void showDetails() {
-        System.out.println("Account Number: " + accountNumber);
-        System.out.println("Account Holder: " + accountHolderName);
-        System.out.println("Balance: " + balance);
-        System.out.println("Email: " + email);
-    }
-
-    public void applyForLoan(double amount) {
-        System.out.println("Loan of " + amount + " applied successfully.");
+        System.out.println("Account Number : " + accountNumber);
+        System.out.println("Account Holder : " + accountHolderName);
+        System.out.println("Balance        : " + balance);
+        System.out.println("Email          : " + email);
     }
 
     abstract void calculateInterest();
 }
 
-// Savings Account
-class SavingsAccount extends BankAccount {
-    private double interestRate = 0.05;
+/* ================= SAVINGS ACCOUNT ================= */
 
-    public SavingsAccount(int accNo, String name,
-                          double balance, String email)
-            throws InvalidEmailException, InvalidAmountException {
+class SavingsAccount extends BankAccount {
+    private final double interestRate = 0.05;
+
+    public SavingsAccount(int accNo, String name, double balance, String email)
+            throws InvalideAccountNumberException, InvalidNameException,
+            InvalidBalanceException, InvalideEmailException {
         super(accNo, name, balance, email);
     }
 
     @Override
     void calculateInterest() {
-        double interest = balance * interestRate;
-        System.out.println("Interest: " + interest);
+        System.out.println("Interest: " + (balance * interestRate));
     }
 }
 
-// Current Account
-class CurrentAccount extends BankAccount {
-    private double overdraftLimit = 10000;
+/* ================= CURRENT ACCOUNT ================= */
 
-    public CurrentAccount(int accNo, String name,
-                          double balance, String email)
-            throws InvalidEmailException, InvalidAmountException {
+class CurrentAccount extends BankAccount {
+    private final double overdraftLimit = 10000;
+
+    public CurrentAccount(int accNo, String name, double balance, String email)
+            throws InvalideAccountNumberException, InvalidNameException,
+            InvalidBalanceException, InvalideEmailException {
         super(accNo, name, balance, email);
     }
 
     @Override
     public void withdraw(double amount) throws InvalidAmountException {
         if (amount <= 0)
-            throw new InvalidAmountException("Withdraw amount must be positive!");
+            throw new InvalidAmountException("Withdraw amount must be greater than zero");
 
         if (amount > balance + overdraftLimit)
-            throw new InvalidAmountException("Overdraft limit exceeded!");
+            throw new InvalidAmountException("Overdraft limit exceeded");
 
         balance -= amount;
         System.out.println("Amount withdrawn: " + amount);
@@ -125,12 +143,13 @@ class CurrentAccount extends BankAccount {
 
     @Override
     void calculateInterest() {
-        System.out.println("No interest for Current Account.");
+        System.out.println("No interest for current account");
     }
 }
 
-// Main Application
-class BankingApp {
+/* ================= MAIN APPLICATION ================= */
+
+public class Bankingapp{
 
     static ArrayList<BankAccount> accounts = new ArrayList<>();
     static Scanner scanner = new Scanner(System.in);
@@ -138,73 +157,80 @@ class BankingApp {
     public static void main(String[] args) {
 
         while (true) {
+            System.out.println("""
+                    ===== BANK MENU =====
+                    1. Create Account
+                    2. Deposit
+                    3. Withdraw
+                    4. Show Details
+                    5. Calculate Interest
+                    6. Exit
+                    """);
+
+            int choice = scanner.nextInt();
+
             try {
-                System.out.println("===== BANK MENU =====");
-                System.out.println("1. Create Account");
-                System.out.println("2. Deposit");
-                System.out.println("3. Withdraw");
-                System.out.println("4. Show Details");
-                System.out.println("5. Calculate Interest");
-                System.out.println("6. Exit");
-
-                int choice = scanner.nextInt();
-
                 switch (choice) {
-                    case 1: createAccount(); break;
-                    case 2: deposit(); break;
-                    case 3: withdraw(); break;
-                    case 4: showDetails(); break;
-                    case 5: calculateInterest(); break;
-                    case 6:
+                    case 1 -> createAccount();
+                    case 2 -> deposit();
+                    case 3 -> withdraw();
+                    case 4 -> showDetails();
+                    case 5 -> calculateInterest();
+                    case 6 -> {
                         System.out.println("Thank you!");
                         System.exit(0);
-                    default:
-                        System.out.println("Invalid choice!");
+                    }
+                    default -> System.out.println("Invalid choice");
                 }
-
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
             }
         }
     }
 
-    static void createAccount() throws Exception {
+    /* ================= METHODS ================= */
 
-        System.out.println("1. Savings\n2. Current");
-        int type = scanner.nextInt();
+    static void createAccount() {
+        try {
+            System.out.println("1. Savings Account");
+            System.out.println("2. Current Account");
+            int type = scanner.nextInt();
 
-        System.out.print("Account Number: ");
-        int accNo = scanner.nextInt();
-        scanner.nextLine();
+            System.out.print("Account Number: ");
+            int accNo = scanner.nextInt();
+            scanner.nextLine();
 
-        if (findAccount(accNo) != null)
-            throw new InvalidAccountException("Account already exists!");
+            System.out.print("Name: ");
+            String name = scanner.nextLine();
 
-        System.out.print("Name: ");
-        String name = scanner.nextLine();
+            System.out.print("Email: ");
+            String email = scanner.nextLine().toLowerCase();
 
-        System.out.print("Email: ");
-        String email = scanner.nextLine().toLowerCase();
+            System.out.print("Balance: ");
+            double balance = scanner.nextDouble();
 
-        System.out.print("Initial Balance: ");
-        double balance = scanner.nextDouble();
+            if (type == 1)
+                accounts.add(new SavingsAccount(accNo, name, balance, email));
+            else if (type == 2)
+                accounts.add(new CurrentAccount(accNo, name, balance, email));
+            else {
+                System.out.println("Invalid account type");
+                return;
+            }
 
-        if (type == 1)
-            accounts.add(new SavingsAccount(accNo, name, balance, email));
-        else if (type == 2)
-            accounts.add(new CurrentAccount(accNo, name, balance, email));
-        else
-            throw new InvalidAccountException("Invalid account type!");
+            System.out.println("Account created successfully!");
 
-        System.out.println("Account created successfully!");
+        } catch (Exception e) {
+            System.out.println("Account creation failed: " + e.getMessage());
+        }
     }
 
-    static BankAccount findAccount(int accNo) {
-        for (BankAccount acc : accounts) {
+    static BankAccount findAccount(int accNo) throws InvalideAccountNumberException {
+        for (BankAccount acc : accounts)
             if (acc.getAccountNumber() == accNo)
                 return acc;
-        }
-        return null;
+
+        throw new InvalideAccountNumberException("Account not found");
     }
 
     static void deposit() throws Exception {
@@ -212,8 +238,6 @@ class BankingApp {
         int accNo = scanner.nextInt();
 
         BankAccount acc = findAccount(accNo);
-        if (acc == null)
-            throw new InvalidAccountException("Account not found!");
 
         System.out.print("Amount: ");
         double amount = scanner.nextDouble();
@@ -226,8 +250,6 @@ class BankingApp {
         int accNo = scanner.nextInt();
 
         BankAccount acc = findAccount(accNo);
-        if (acc == null)
-            throw new InvalidAccountException("Account not found!");
 
         System.out.print("Amount: ");
         double amount = scanner.nextDouble();
@@ -239,21 +261,13 @@ class BankingApp {
         System.out.print("Account Number: ");
         int accNo = scanner.nextInt();
 
-        BankAccount acc = findAccount(accNo);
-        if (acc == null)
-            throw new InvalidAccountException("Account not found!");
-
-        acc.showDetails();
+        findAccount(accNo).showDetails();
     }
 
     static void calculateInterest() throws Exception {
         System.out.print("Account Number: ");
         int accNo = scanner.nextInt();
 
-        BankAccount acc = findAccount(accNo);
-        if (acc == null)
-            throw new InvalidAccountException("Account not found!");
-
-        acc.calculateInterest();
+        findAccount(accNo).calculateInterest();
     }
 }
